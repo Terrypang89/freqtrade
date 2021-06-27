@@ -53,6 +53,12 @@ freqtrade backtesting -s HansenSmaOffsetV1 -i 1h --datadir user_data/data/bittre
 
 freqtrade plot-dataframe --strategy HansenSmaOffsetV1 --timeframe 1h --export=trades
 
+================================================
+
+freqtrade backtesting -s HansenSmaOffsetV2 -i 1h --datadir user_data/data/bittrex --export trades --config config.json --stake-amount 100
+
+freqtrade plot-dataframe --strategy HansenSmaOffsetV2 --timeframe 1h --export=trades
+
 ==============================================
 
 freqtrade backtesting --strategy  Obelisk_Ichimoku_Slow_v1_3 -i 1h --datadir user_data/data/bittrex --export trades --config config.json --stake-amount 100

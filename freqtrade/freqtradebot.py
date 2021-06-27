@@ -32,7 +32,6 @@ from freqtrade.strategy.interface import IStrategy, SellType
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.wallets import Wallets
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -63,11 +62,13 @@ class FreqtradeBot(LoggingMixin):
         self._sell_rate_cache: TTLCache = TTLCache(maxsize=100, ttl=1800)
         self._buy_rate_cache: TTLCache = TTLCache(maxsize=100, ttl=1800)
 
+        #get the strategy from strategy/interface.py
         self.strategy: IStrategy = StrategyResolver.load_strategy(self.config)
 
         # Check config consistency here since strategies can set certain options
         validate_config_consistency(config)
 
+        #get the
         self.exchange = ExchangeResolver.load_exchange(self.config['exchange']['name'], self.config)
 
         init_db(self.config.get('db_url', None), clean_open_orders=self.config['dry_run'])
@@ -385,6 +386,8 @@ class FreqtradeBot(LoggingMixin):
         # Create entity and execute trade for each pair from whitelist
         for pair in whitelist:
             try:
+                logger.info("-------------check create_trade Active pair =")
+                logger.info(pair)
                 trades_created += self.create_trade(pair)
             except DependencyException as exception:
                 logger.warning('Unable to create trade for %s: %s', pair, exception)
@@ -450,11 +453,14 @@ class FreqtradeBot(LoggingMixin):
         :return: True if a trade has been created.
         """
         logger.debug(f"create_trade for pair {pair}")
-
+        # get all the analyzed_dataframe based on requested frame
         analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(pair, self.strategy.timeframe)
+        # get now time
         nowtime = analyzed_df.iloc[-1]['date'] if len(analyzed_df) > 0 else None
+        logger.info("----anaylzed.df = %s, nowtime = %s" %(analyzed_df, nowtime))
         if self.strategy.is_pair_locked(pair, nowtime):
             lock = PairLocks.get_pair_longest_lock(pair, nowtime)
+            logger.info("----check lock = %s" %lock)
             if lock:
                 self.log_once(f"Pair {pair} is still locked until "
                               f"{lock.lock_end_time.strftime(constants.DATETIME_PRINT_FORMAT)}.",
@@ -471,10 +477,12 @@ class FreqtradeBot(LoggingMixin):
 
         # running get_signal on historical data fetched
         (buy, sell) = self.strategy.get_signal(pair, self.strategy.timeframe, analyzed_df)
+        logger.info("----run strategy get_signal buy = %s, sell = %s, from strategy tumeframe = %s" %(buy, sell, self.strategy.timeframe))
 
         if buy and not sell:
             stake_amount = self.wallets.get_trade_stake_amount(pair, self.get_free_open_trades(),
                                                                self.edge)
+            logger.info("----stake_amount = %s, pair = %s, get_free_open_trades = %s, edge = %s" %(stake_amount, pair, self.get_free_open_trades(), self.edge))
             if not stake_amount:
                 logger.debug(f"Stake amount is 0, ignoring possible trade for {pair}.")
                 return False
@@ -483,6 +491,7 @@ class FreqtradeBot(LoggingMixin):
                         f"{stake_amount} ...")
 
             bid_check_dom = self.config.get('bid_strategy', {}).get('check_depth_of_market', {})
+            logger.info("----bid_check_dom = %s" %bid_check_dom)
             if ((bid_check_dom.get('enabled', False)) and
                     (bid_check_dom.get('bids_to_ask_delta', 0) > 0)):
                 if self._check_depth_of_market_buy(pair, bid_check_dom):
@@ -687,6 +696,7 @@ class FreqtradeBot(LoggingMixin):
         Tries to execute sell orders for open trades (positions)
         """
         trades_closed = 0
+        #check in every trades
         for trade in trades:
             try:
 
@@ -1339,13 +1349,14 @@ class FreqtradeBot(LoggingMixin):
         except DependencyException as exception:
             logger.warning("Could not update trade amount: %s", exception)
 
+        # order is canceled and return true
         if self.exchange.check_order_canceled_empty(order):
             # Trade has been cancelled on exchange
             # Handling of this will happen in check_handle_timeout.
             return True
         trade.update(order)
 
-        # Updating wallets when order is closed
+        # Updating wallets when order is closed & return false
         if not trade.is_open:
             self.protections.stop_per_pair(trade.pair)
             self.protections.global_stop()

@@ -103,6 +103,7 @@ class Arguments:
         self.args = args
         self._parsed_arg: Optional[argparse.Namespace] = None
 
+    #this function is called in main.py
     def get_parsed_arg(self) -> Dict[str, Any]:
         """
         Return the list of arguments
@@ -185,6 +186,7 @@ class Arguments:
         # Add trade subcommand
         trade_cmd = subparsers.add_parser('trade', help='Trade module.',
                                           parents=[_common_parser, _strategy_parser])
+        #call for commands/trade_commands so it call start_trading using worker to run freqtradebot
         trade_cmd.set_defaults(func=start_trading)
         self._build_args(optionlist=ARGS_TRADE, parser=trade_cmd)
 

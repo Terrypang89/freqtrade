@@ -21,7 +21,6 @@ from freqtrade.persistence import PairLocks, Trade
 from freqtrade.strategy.strategy_wrapper import strategy_safe_wrapper
 from freqtrade.wallets import Wallets
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -466,19 +465,24 @@ class IStrategy(ABC):
 
         latest_date = dataframe['date'].max()
         latest = dataframe.loc[dataframe['date'] == latest_date].iloc[-1]
+
+        logger.info("----latest_date = %s" %(latest_date))
+        #logger.info("---- latest = %s" %latest)
         # Explicitly convert to arrow object to ensure the below comparison does not fail
         latest_date = arrow.get(latest_date)
 
         # Check if dataframe is out of date
         timeframe_minutes = timeframe_to_minutes(timeframe)
         offset = self.config.get('exchange', {}).get('outdated_offset', 5)
+        #logger.info("---- latest = %s" %latest)
+        logger.info("----timeframe_minutes = %s, offset = %s, arrow.utcnow = %s, shifted arrow.utcnow = %s" %(timeframe_minutes, offset, arrow.utcnow(), arrow.utcnow().shift(minutes=-(timeframe_minutes * 2 + offset))))
         if latest_date < (arrow.utcnow().shift(minutes=-(timeframe_minutes * 2 + offset))):
             logger.warning(
                 'Outdated history for pair %s. Last tick is %s minutes old',
                 pair, int((arrow.utcnow() - latest_date).total_seconds() // 60)
             )
             return False, False
-
+        #check the latest signal buy value is 1 or sell value is 1
         (buy, sell) = latest[SignalType.BUY.value] == 1, latest[SignalType.SELL.value] == 1
         logger.debug('trigger: %s (pair=%s) buy=%s sell=%s',
                      latest['date'], pair, str(buy), str(sell))

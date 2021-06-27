@@ -12,7 +12,7 @@ import sdnotify
 from freqtrade import __version__, constants
 from freqtrade.configuration import Configuration
 from freqtrade.exceptions import OperationalException, TemporaryError
-from freqtrade.freqtradebot import FreqtradeBot
+from freqtrade.freqtradebot import FreqtradeBot # call FreqtradeBot
 from freqtrade.state import State
 
 
@@ -49,7 +49,7 @@ class Worker:
             self._config = Configuration(self._args, None).get_config()
 
         # Init the instance of the bot
-        self.freqtrade = FreqtradeBot(self._config)
+        self.freqtrade = FreqtradeBot(self._config) #call Freqtradebot
 
         internals_config = self._config.get('internals', {})
         self._throttle_secs = internals_config.get('process_throttle_secs',

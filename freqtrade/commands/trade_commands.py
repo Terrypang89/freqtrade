@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-
+#start calling Worker
 def start_trading(args: Dict[str, Any]) -> int:
     """
     Main entry point for trading mode

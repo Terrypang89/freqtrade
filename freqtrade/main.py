@@ -30,6 +30,7 @@ def main(sysargv: List[str] = None) -> None:
     try:
         setup_logging_pre()
         arguments = Arguments(sysargv)
+        #get_parsed_arg function in command/arguments to run starttrading using workers
         args = arguments.get_parsed_arg()
 
         # Call subcommand.

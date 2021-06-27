@@ -1384,6 +1384,7 @@ def timeframe_to_next_date(timeframe: str, date: datetime = None) -> datetime:
     """
     if not date:
         date = datetime.now(timezone.utc)
+    # date to timestamp
     new_timestamp = ccxt.Exchange.round_timeframe(timeframe, date.timestamp() * 1000,
                                                   ROUND_UP) // 1000
     return datetime.fromtimestamp(new_timestamp, tz=timezone.utc)
