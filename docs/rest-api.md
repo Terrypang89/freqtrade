@@ -71,11 +71,14 @@ If you run your bot using docker, you'll need to have the bot listen to incoming
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080
+        "listen_port": 8080,
+        "username": "Freqtrader",
+        "password": "SuperSecret1!",
+        //...
     },
 ```
 
-Uncomment the following from your docker-compose file:
+Make sure that the following 2 lines are available in your docker-compose file:
 
 ```yml
     ports:
@@ -106,7 +109,10 @@ By default, the script assumes `127.0.0.1` (localhost) and port `8080` to be use
     "api_server": {
         "enabled": true,
         "listen_ip_address": "0.0.0.0",
-        "listen_port": 8080
+        "listen_port": 8080,
+        "username": "Freqtrader",
+        "password": "SuperSecret1!",
+        //...
     }
 }
 ```
@@ -124,7 +130,8 @@ python3 scripts/rest_client.py --config rest_config.json <command> [optional par
 | `stop` | Stops the trader.
 | `stopbuy` | Stops the trader from opening new trades. Gracefully closes open trades according to their rules.
 | `reload_config` | Reloads the configuration file.
-| `trades` | List last trades.
+| `trades` | List last trades. Limited to 500 trades per call.
+| `trade/<tradeid>` | Get specific trade.
 | `delete_trade <trade_id>` | Remove trade from the database. Tries to close open orders. Requires manual handling of this trade on the exchange.
 | `show_config` | Shows part of the current configuration with relevant settings to operation.
 | `logs` | Shows last log messages.
@@ -181,7 +188,7 @@ count
 	Return the amount of open trades.
 
 daily
-	Return the amount of open trades.
+	Return the profits for each day, and amount of trades.
 
 delete_lock
 	Delete (disable) lock from the database.
@@ -214,7 +221,7 @@ locks
 logs
 	Show latest logs.
 
-        :param limit: Limits log messages to the last <limit> logs. No limit to get all the trades.
+        :param limit: Limits log messages to the last <limit> logs. No limit to get the entire log.
 
 pair_candles
 	Return live dataframe for <pair><timeframe>.
@@ -233,6 +240,9 @@ pair_history
 
 performance
 	Return the performance of the different coins.
+
+ping
+	simple ping
 
 plot_config
 	Return plot configuration if the strategy defines one.
@@ -270,17 +280,22 @@ strategy
 
         :param strategy: Strategy class name
 
-trades
-	Return trades history.
+trade
+	Return specific trade
 
-        :param limit: Limits trades to the X last trades. No limit to get all the trades.
+        :param trade_id: Specify which trade to get.
+
+trades
+	Return trades history, sorted by id
+
+        :param limit: Limits trades to the X last trades. Max 500 trades.
+        :param offset: Offset by this amount of trades.
 
 version
 	Return the version of the bot.
 
 whitelist
 	Show the current whitelist.
-
 ```
 
 ### OpenAPI interface
@@ -315,12 +330,15 @@ Since the access token has a short timeout (15 min) - the `token/refresh` reques
 
 ### CORS
 
-All web-based front-ends are subject to [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) - Cross-Origin Resource Sharing.
-Since most of the requests to the Freqtrade API must be authenticated, a proper CORS policy is key to avoid security problems.
-Also, the standard disallows `*` CORS policies for requests with credentials, so this setting must be set appropriately.
+This whole section is only necessary in cross-origin cases (where you multiple bot API's running on `localhost:8081`, `localhost:8082`, ...), and want to combine them into one FreqUI instance.
 
-Users can configure this themselves via the `CORS_origins` configuration setting.
-It consists of a list of allowed sites that are allowed to consume resources from the bot's API.
+??? info "Technical explanation"
+    All web-based front-ends are subject to [CORS](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) - Cross-Origin Resource Sharing.
+    Since most of the requests to the Freqtrade API must be authenticated, a proper CORS policy is key to avoid security problems.
+    Also, the standard disallows `*` CORS policies for requests with credentials, so this setting must be set appropriately.
+
+Users can allow access from different origin URL's to the bot API via the `CORS_origins` configuration setting.
+It consists of a list of allowed URL's that are allowed to consume resources from the bot's API.
 
 Assuming your application is deployed as `https://frequi.freqtrade.io/home/` - this would mean that the following configuration becomes necessary:
 
@@ -329,6 +347,20 @@ Assuming your application is deployed as `https://frequi.freqtrade.io/home/` - t
     //...
     "jwt_secret_key": "somethingrandom",
     "CORS_origins": ["https://frequi.freqtrade.io"],
+    //...
+}
+```
+
+In the following (pretty common) case, FreqUI is accessible on `http://localhost:8080/trade` (this is what you see in your navbar when navigating to freqUI).
+![freqUI url](assets/frequi_url.png)
+
+The correct configuration for this case is `http://localhost:8080` - the main part of the URL including the port.
+
+```jsonc
+{
+    //...
+    "jwt_secret_key": "somethingrandom",
+    "CORS_origins": ["http://localhost:8080"],
     //...
 }
 ```

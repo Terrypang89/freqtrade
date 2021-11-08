@@ -1,0 +1,288 @@
+{
+    "max_open_trades": 3, 
+// Number of open trades your bot is allowed to have. Only one open trade per pair is possible
+    "stake_currency": "BTC",
+    "stake_amount": 0.05, 
+// Amount of crypto-currency your bot will use for each trade or for dynamic stake amount if unlimited
+    "tradable_balance_ratio": 0.99, 
+// Ratio of the total account balance the bot is allowed to trade, or for dynamic stake amount if 0.99, will be currency_balance / (max_opentrades - current_opentrades) 
+    "fiat_display_currency": "USD", 
+// Fiat currency used to show your profits
+    "amount_reserve_percent": 0.05, 
+// Reserve some amount in min pair stake amount, reserve amount_reserve_percent + stoploss value when calculating min pair stake amount
+    "amend_last_stake_amount": false, 
+// Use reduced last stake amount, so the left over from stake amount will continue to set for a trade eventhought left over is below stake amount
+    "last_stake_amount_min_ratio": 0.5, 
+// defaults to 0.5 (50%). This means that the minimum stake amount that's ever used is stake_amount * 0.5
+    "dry_run": true,
+    "cancel_open_orders_on_exit": false, 
+// Cancel open orders when the /stop RPC command is issued
+    "timeframe": "5m",
+    "trailing_stop": false, 
+// stoploss will be adjusted to be always be -10% of the highest observed price
+    "trailing_stop_positive": 0.02, 
+// bot buy asset at 100$, stoploss -10%, so triggered when asset drop below 90$, assume asset now increase to 102$, stoploss is -2% of 102$ = 99.96$, asset drop to 101$ but stoploss stll 99.96$. 
+    "trailing_stop_positive_offset": 0.03,
+// bot buy asset at 100$, stoploss -10%, so triggered when asset drop below 90$, stoploss remain at 90$ unless asset increase to or above configured offset, assume asset now increase to 103$(where we have offset configured), stoploss is -2% of 103$ = 100.94$, asset drop to 101$ but stoploss stll 100.94$
+    "trailing_only_offset_is_reached": false,
+    "use_sell_signal": true,
+    "sell_profit_only": false,
+    "sell_profit_offset": 0.0,
+    "ignore_roi_if_buy_signal": false,
+    "minimal_roi": {
+        "40":  0.0,  // Sell after 40 minutes if the profit is not negative
+        "30":  0.01, // Sell after 30 minutes if there is at least 1% profit
+        "20":  0.02, // Sell after 20 minutes if there is at least 2% profit
+        "0":  0.04   // Sell immediately if there is at least 4% profit
+    },
+    "stoploss": -0.10, 
+// stop loss is defined at -10%
+    "unfilledtimeout": { 
+// How long (in minutes) the bot will wait for an unfilled buy/sell order to complete, after which the order will be cancelled and repeated at current (new) price
+        "buy": 10,
+        "sell": 30,
+        "exit_timeout_count": 0,
+        "unit": "minutes"
+    },
+// 101  # ask
+// -------------Current spread
+// 99   # bid
+    "bid_strategy": { // bid refer to buy
+        "price_side": "bid",
+// defines the side of the spread the bot looks for when buying, when set to bid, bot buy at 99$
+        "use_order_book": true,
+// Freqtrade fetches the bid_strategy.order_book_top entries from the orderbook and then uses the entry specified as bid_strategy.order_book_top on the configured side (bid_strategy.price_side) of the orderbook. 1 specifies the topmost entry in the orderbook, while 2 would use the 2nd entry in the orderbook, and so on.
+        "ask_last_balance": 0.0,
+        "order_book_top": 1,
+// Bot will use the top N rate in Order Book Bids to buy. I.e. a value of 2 will allow the bot to pick the 2nd bid rate in Order
+        "check_depth_of_market": {
+            "enabled": false, 
+// Do not buy if the difference of buy orders and sell orders is met in Order Book
+// buy signals are filtered based on the orderbook depth (sum of all amounts) for each orderbook side
+            "bids_to_ask_delta": 1
+// The difference ratio of buy orders and sell orders found in Order Book. A value below 1 means sell order size is greater, while value greater than 1 means buy order size is higher
+        }
+    },
+// 101  # ask
+// -------------Current spread
+// 99   # bid
+    "ask_strategy":{ // ask refers to sell 
+        "price_side": "ask",
+// defines the side of the spread the bot looks for when selling, when set to ask, bot set at 101$
+        "use_order_book": true,
+// Freqtrade fetches the ask_strategy.order_book_max entries in the orderbook. Then each of the orderbook steps between ask_strategy.order_book_min and ask_strategy.order_book_max on the configured orderbook side are validated for a profitable sell-possibility based on the strategy configuration (minimal_roi conditions) and the sell order is placed at the first profitable spot
+        "order_book_top": 1
+    },
+    "order_types": {
+// stoploss is on exchange it means a stoploss limit order is placed on the exchange immediately after buy order happens successfully.
+        "buy": "limit",
+        "sell": "limit",
+        "emergencysell": "market",
+// used when craeting stoploss on exchange orders fails
+        "forcesell": "market",
+// is used when sending a /forcesell command from Telegram or from the Rest API
+        "forcebuy": "market",
+// is used when sending a /forcebuy command from Telegram or from the Rest API
+        "stoploss": "market",
+
+        "stoploss_on_exchange": false,
+// stoploss is on exchange it means a stoploss limit order is placed on the exchange immediately after buy order happens successfully.
+        "stoploss_on_exchange_interval": 60,
+// configures the interval in seconds at which the bot will check the stoploss and update it if necessary so bot will check stoploss and update every 1 min (60 seconds)
+    },
+    "order_time_in_force": {
+// defines the policy by which the order is executed on the exchange. Three commonly used time in force are:
+// GTC (Good Till Canceled): most of the time the default time in force. It means the order will remain on exchange till it is canceled by user. 
+// FOK (Fill Or Kill): if the order is not executed immediately AND fully then it is canceled by the exchange
+// IOC (Immediate Or Canceled):  same as FOK (above) except it can be partially fulfilled. The remaining part is automatically cancelled by the exchange
+        "buy": "gtc",
+        "sell": "gtc"
+    },
+    "pairlists": [
+        {"method": "StaticPairList"},
+// which uses a statically defined pair whitelist from the configuration. The pairlist also supports wildcards (in regex-style) - so .*/BTC will include all pairs with BTC as a stake.
+        {
+            "method": "VolumePairList",
+// employs sorting/filtering of pairs by their trading volume. It selects number_assets top pairs with sorting based on the sort_key
+            "number_assets": 20,
+            "sort_key": "quoteVolume",
+            "refresh_period": 1800
+// allows to define the period (in seconds), at which the pairlist will be refreshed. Defaults to 1800s (30 minutes)
+        },
+        {"method": "AgeFilter", "min_days_listed": 10},
+// Removes pairs that have been listed on the exchange for less than min_days_listed days (defaults to 10).
+// When pairs are first listed on an exchange they can suffer huge price drops and volatility in the first few days while the pair goes through its price-discovery period. Bots can often be caught out buying before the pair has finished dropping in price.
+        {"method": "PrecisionFilter"},
+// Sorts pairs by past trade performance, as follows: 1. Positive performance. 2. No closed trades yet. 3. Negative performance.
+        {"method": "PriceFilter", "low_price_ratio": 0.01, "min_price": 0.00000010},
+// allows filtering of pairs by price.
+// min_price setting removes pairs where the price is below the specified price
+// max_price setting removes pairs where the price is above the specified price
+// low_price_ratio setting removes pairs where a raise of 1 price unit (pip) is above the low_price_ratio ratio.
+        {"method": "SpreadFilter", "max_spread_ratio": 0.005},
+// Removes pairs that have a difference between asks and bids above the specified ratio, max_spread_ratio (defaults to 0.005).
+// If DOGE/BTC maximum bid is 0.00000026 and minimum ask is 0.00000027, the ratio is calculated as: 1 - bid/ask ~= 0.037 which is > 0.005 and this pair will be filtered out.
+        {
+            "method": "RangeStabilityFilter",
+            "lookback_days": 10,
+            "min_rate_of_change": 0.01,
+            "refresh_period": 1440
+        }
+// Removes pairs where the difference between lowest low and highest high over lookback_days days is below min_rate_of_change. Since this is a filter that requires additional data, the results are cached for refresh_period.
+// If the trading range over the last 10 days is <1%, remove the pair from the whitelist.
+    ],
+// Protections will protect your strategy from unexpected events and market conditions by temporarily stop trading for either one pair, or for all pairs
+
+    "protections": [
+        {
+            "method": "StoplossGuard",
+// Stop trading if a certain amount of stoploss occurred within a certain time window
+            "lookback_period_candles": 60,
+// StoplossGuard selects all trades within lookback_period in minutes (or in candles when using lookback_period_candles)
+            "trade_limit": 4,
+//  If trade_limit or more trades resulted in stoploss, trading will stop for stop_duration in minutes (or in candles when using stop_duration_candles). 
+            "stop_duration_candles": 4,
+            "only_per_pair": false
+// applies across all pairs, unless only_per_pair is set to true, which will then only look at one pair at a time.
+// StoplossGuard selects all trades within lookback_period in minutes (or in candles when using lookback_period_candles). If trade_limit or more trades resulted in stoploss, trading will stop for stop_duration in minutes (or in candles when using stop_duration_candles).
+// stops trading for all pairs for 4 candles after the last trade if the bot hit stoploss 4 times within the last 60 candles.
+        },
+        {
+            "method": "CooldownPeriod",
+// Don't enter a trade right after selling a trade.
+            "stop_duration_candles": 2
+// CooldownPeriod locks a pair for stop_duration in minutes (or in candles when using stop_duration_candles) after selling, avoiding a re-entry for this pair for stop_duration minutes.
+// stop trading a pair for 2 candles after closing a trade, allowing this pair to "cool down".
+        },
+        {
+            "method": "MaxDrawdown",
+// Stop trading if max-drawdown is reached.
+            "lookback_period_candles": 40,
+// MaxDrawdown uses all trades within lookback_period in minutes (or in candles when using lookback_period_candles) to determine the maximum drawdown
+            "trade_limit": 20,
+            "stop_duration_candles": 12,
+            "max_allowed_drawdown": 0.2
+// If the drawdown is below max_allowed_drawdown, trading will stop for stop_duration in minutes (or in candles when using stop_duration_candles) after the last trade - assuming that the bot needs some time to let markets recover.
+// stops trading for 12 candles if max-drawdown is > 20% considering all pairs - with a minimum of trade_limit trades - within the last 48 candles.
+        },
+        {
+            "method": "LowProfitPairs",
+// Lock pairs with low profits
+            "lookback_period_candles": 6,
+// LowProfitPairs uses all trades for a pair within lookback_period in minutes (or in candles when using lookback_period_candles) to determine the overall profit ratio.
+            "trade_limit": 2,
+            "stop_duration_candles": 60,
+            "required_profit": 0.02
+// If that ratio is below required_profit, that pair will be locked for stop_duration in minutes (or in candles when using stop_duration_candles).
+// stop trading a pair for 60 minutes if the pair does not have a required profit of 2% (and a minimum of 2 trades) within the last 6 candles.
+        }
+    ],
+// Freqtrade is based on CCXT library that supports over 100 cryptocurrency exchange markets and trading AP
+    "exchange": {
+        "name": "binance",
+        "sandbox": false,
+        "key": "your_exchange_key",
+        "secret": "your_exchange_secret",
+        "password": "",
+// Additional CCXT parameters passed to both ccxt instances (sync and async).
+        "ccxt_config": {"enableRateLimit": true},
+// completely disabled by setting "enableRateLimit" to false
+        "ccxt_async_config": {
+            "enableRateLimit": true,
+            "rateLimit": 500,
+// rate limiting to avoid bans from the exchange. "rateLimit": 500 defines a wait-event of 0.5s between each call.
+            "aiohttp_trust_env": false
+        },
+        "pair_whitelist": [
+            "ALGO/BTC",
+            "ATOM/BTC",
+            "BAT/BTC",
+            "BCH/BTC",
+            "BRD/BTC",
+            "EOS/BTC",
+            "ETH/BTC",
+            "IOTA/BTC",
+            "LINK/BTC",
+            "LTC/BTC",
+            "NEO/BTC",
+            "NXS/BTC",
+            "XMR/BTC",
+            "XRP/BTC",
+            "XTZ/BTC"
+        ],
+        "pair_blacklist": [
+            "DOGE/BTC"
+        ],
+        "outdated_offset": 5,
+        "markets_refresh_interval": 60
+    },
+    "edge": {
+        "enabled": false,
+        "process_throttle_secs": 3600,
+        "calculate_since_number_of_days": 7,
+        "allowed_risk": 0.01,
+        "stoploss_range_min": -0.01,
+        "stoploss_range_max": -0.1,
+        "stoploss_range_step": -0.01,
+        "minimum_winrate": 0.60,
+        "minimum_expectancy": 0.20,
+        "min_trade_number": 10,
+        "max_trade_duration_minute": 1440,
+        "remove_pumps": false
+    },
+    "telegram": {
+        "enabled": false,
+        "token": "your_telegram_token",
+        "chat_id": "your_telegram_chat_id",
+        "notification_settings": {
+            "status": "on",
+            "warning": "on",
+            "startup": "on",
+            "buy": "on",
+            "buy_fill": "on",
+            "sell": {
+                "roi": "off",
+                "emergency_sell": "off",
+                "force_sell": "off",
+                "sell_signal": "off",
+                "trailing_stop_loss": "off",
+                "stop_loss": "off",
+                "stoploss_on_exchange": "off",
+                "custom_sell": "off"
+            },
+            "sell_fill": "on",
+            "buy_cancel": "on",
+            "sell_cancel": "on",
+            "protection_trigger": "off",
+            "protection_trigger_global": "on"
+        },
+        "reload": true,
+        "balance_dust_level": 0.01
+    },
+// for setup frequi
+    "api_server": { 
+        "enabled": false,
+        "listen_ip_address": "127.0.0.1",
+        "listen_port": 8080,
+        "verbosity": "error",
+        "enable_openapi": false,
+        "jwt_secret_key": "somethingrandom",
+        "CORS_origins": [],
+        "username": "freqtrader",
+        "password": "SuperSecurePassword"
+    },
+    "bot_name": "freqtrade",
+    "db_url": "sqlite:///tradesv3.sqlite",
+    "initial_state": "running",
+    "forcebuy_enable": false,
+// enables the usage of forcebuy commands via Telegram and REST API
+    "internals": {
+        "process_throttle_secs": 5,
+        "heartbeat_interval": 60
+    },
+    "disable_dataframe_checks": false,
+    "strategy": "SampleStrategy",
+    "strategy_path": "user_data/strategies/",
+    "dataformat_ohlcv": "json",
+    "dataformat_trades": "jsongz"
+}

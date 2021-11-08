@@ -11,9 +11,9 @@ import sdnotify
 
 from freqtrade import __version__, constants
 from freqtrade.configuration import Configuration
+from freqtrade.enums import State
 from freqtrade.exceptions import OperationalException, TemporaryError
-from freqtrade.freqtradebot import FreqtradeBot # call FreqtradeBot
-from freqtrade.state import State
+from freqtrade.freqtradebot import FreqtradeBot
 
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class Worker:
             self._config = Configuration(self._args, None).get_config()
 
         # Init the instance of the bot
-        self.freqtrade = FreqtradeBot(self._config) #call Freqtradebot
+        self.freqtrade = FreqtradeBot(self._config)
 
         internals_config = self._config.get('internals', {})
         self._throttle_secs = internals_config.get('process_throttle_secs',
@@ -61,7 +61,7 @@ class Worker:
 
     def _notify(self, message: str) -> None:
         """
-        Removes the need to verify in all occurances if sd_notify is enabled
+        Removes the need to verify in all occurrences if sd_notify is enabled
         :param message: Message to send to systemd if it's enabled.
         """
         if self._sd_notify:
